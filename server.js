@@ -44,6 +44,7 @@ app.use("/logout", require("./routes/logout"));
 
 app.use(verifyJWT); // routes that we wanna verify go under ofc
 app.use("/employees", require("./routes/api/employees"));
+app.use("/users", require("./routes/api/users"));
 
 app.all("*", (req, res) => {
   res.status(404);
