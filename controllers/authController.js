@@ -22,7 +22,7 @@ const handleLogin = async (req, res) => {
     const accessToken = jwt.sign(
       { UserInfo: { username: foundUser.username, roles: roles } },
       process.env.ACCESS_TOKEN_SECRET,
-      { expiresIn: "15s" }
+      { expiresIn: "8m" }
     );
     const newRefreshToken = jwt.sign(
       { username: foundUser.username },
@@ -59,11 +59,11 @@ const handleLogin = async (req, res) => {
       httpOnly: true,
       secure: true,
       sameSite: "None",
-      maxAge: 8 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000,
     });
 
     //secure: true,
-    res.json({ roles, accessToken });
+    res.json({ accessToken });
   } else {
     res.sendStatus(401);
   }
