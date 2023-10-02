@@ -8,10 +8,14 @@ router
   .route("/")
   .get(verifyRoles(ROLES_LIST.Admin), usersController.getAllUsers)
   .delete(verifyRoles(ROLES_LIST.Admin), usersController.deleteUser)
-  .post(verifyRoles(ROLES_LIST.Admin), usersController.addRemoveAdmin);
+  .patch(verifyRoles(ROLES_LIST.Admin), usersController.addAdmin);
 
 router
   .route("/:id")
   .get(verifyRoles(ROLES_LIST.Admin), usersController.getUser);
+
+router
+  .route("/removeAdmin")
+  .patch(verifyRoles(ROLES_LIST.Admin), usersController.removeAdmin);
 
 module.exports = router;
