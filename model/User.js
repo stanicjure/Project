@@ -19,6 +19,19 @@ const userSchema = new Schema({
     required: true,
   },
   refreshToken: [String],
+  apartments: [
+    {
+      label: String,
+      reservations: [
+        {
+          price: Number,
+          persons: Number,
+          start: Date,
+          end: Date,
+        },
+      ],
+    },
+  ],
 });
 
 module.exports = mongoose.model("User", userSchema);

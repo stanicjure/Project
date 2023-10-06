@@ -18,4 +18,9 @@ router
   .route("/removeAdmin")
   .patch(verifyRoles(ROLES_LIST.Admin), usersController.removeAdmin);
 
+router
+  .route("/apartments")
+  .post(verifyRoles(ROLES_LIST.Admin), usersController.addApartment)
+  .patch(verifyRoles(ROLES_LIST.Admin), usersController.addReservation);
+
 module.exports = router;
