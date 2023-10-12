@@ -21,6 +21,10 @@ const addApartment = async (req, res) => {
   user.save();
   res.json(user);
 };
+const deleteApartment = async (req, res) => {
+  if (!req?.body?.username)
+    return res.status(400).json({ message: "Username is required!" });
+};
 
 const addReservation = async (req, res) => {
   if (!req?.body?.username)
@@ -30,33 +34,92 @@ const addReservation = async (req, res) => {
       req?.body?.apartmentName &&
       req?.body?.startDate &&
       req?.body?.endDate &&
-      req?.body?.price
+      req?.body?.price &&
+      req?.body?.persons
     )
   )
     return res.status(400).json({ message: "Reservation inputs are required" });
 
   const user = await User.findOne({ username: req.body.username }).exec();
-  const { apartmentName, startDate, endDate, price } = req.body;
-  let newReservation;
+  const { apartmentName, startDate, endDate, persons, price } = req.body;
 
+  if (!(Date(startDate) && Date(endDate)))
+    return res
+      .status(400)
+      .json({ message: "Start date and End date must be type of Date" });
+
+  if (!(Number(persons) && Number(price)))
+    return res
+      .status(400)
+      .json({ message: "Price and persons should be a number" });
+
+  const resetHoursStart = new Date(startDate).setHours(2);
+  const resetHoursEnd = new Date(endDate).setHours(2);
+
+  const compareStart = new Date(resetHoursStart).getTime();
+  const compareEnd = new Date(resetHoursEnd).getTime();
+
+  if (compareStart > compareEnd)
+    return res
+      .status(400)
+      .json({ message: "Start date must be smaller than End date" });
+
+  //Check if there is existing reservation
+  let reservations;
   user?.apartments.forEach((ap) => {
-    if (ap.label === apartmentName) {
-      ap.reservations = [
-        ...ap.reservations,
-        { price: price, start: startDate, end: endDate },
-      ];
-
-      newReservation = {
-        apartmentName: apartmentName,
-        startDate: startDate,
-        endDate: endDate,
-        price: price,
-      };
-    }
+    if (ap.label === apartmentName) reservations = ap.reservations;
   });
 
-  user.save();
-  res.json(newReservation);
+  let errorFound = false;
+  reservations.forEach((re) => {
+    if (!errorFound)
+      if (
+        (compareStart >= re.start.getTime() &&
+          compareStart < re.end.getTime()) ||
+        (compareEnd > re.start.getTime() && compareEnd <= re.end.getTime())
+      ) {
+        res.status(400).json({ message: "There is an existing reservation" });
+        errorFound = true;
+        return;
+      }
+  });
+
+  //
+
+  let newReservation;
+
+  if (!errorFound)
+    user?.apartments.forEach((ap) => {
+      if (ap.label === apartmentName) {
+        ap.reservations = [
+          ...ap.reservations,
+          {
+            price: price,
+            persons: persons,
+            start: resetHoursStart,
+            end: resetHoursEnd,
+          },
+        ];
+
+        newReservation = {
+          apartmentName: apartmentName,
+          startDate: resetHoursStart,
+          endDate: resetHoursEnd,
+          price: price,
+          persons: persons,
+        };
+
+        ap.reservations.sort((a, b) => {
+          if (a.start < b.start) return -1;
+          else return 1;
+        });
+      }
+    });
+
+  if (!errorFound) {
+    user.save();
+    res.json(newReservation);
+  }
 };
 
 const deleteUser = async (req, res) => {
