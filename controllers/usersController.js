@@ -14,16 +14,52 @@ const addApartment = async (req, res) => {
   //ADD IN CASE OF DUPLICATE
   const user = await User.findOne({ username: req.body.username }).exec();
 
-  const result = user.apartments.push({
-    label: req.body.apartmentName,
-    reservations: [],
+  let errorFound = new Array();
+  let tempArr;
+  if (Array.isArray(req.body.apartmentName)) {
+    tempArr = Array.from(req.body.apartmentName);
+  } else {
+    tempArr = new Array();
+    tempArr.push(req.body.apartmentName);
+  }
+
+  user?.apartments.forEach((ap) => {
+    tempArr.forEach((t) => {
+      if (ap.label === req.body.apartmentName) errorFound = [...errorFound, t];
+    });
   });
-  user.save();
-  res.json(user);
+  if (errorFound.length === 0) {
+    tempArr.forEach((ap) => {
+      const result = user.apartments.push({
+        label: ap,
+        reservations: [],
+      });
+    });
+
+    user.save();
+    res.status(200).json({
+      message: `Successfully added apartment ${req.body.apartmentName}`,
+    });
+  } else {
+    res.status(409).json({ message: `Already exists: ${errorFound}` });
+  }
 };
 const deleteApartment = async (req, res) => {
   if (!req?.body?.username)
     return res.status(400).json({ message: "Username is required!" });
+  if (!req?.body?.apartmentName)
+    return res.status(400).json({ message: "Apartment name is required!" });
+
+  const user = await User.findOne({ username: req.body.username }).exec();
+
+  const indexToRemove = user?.apartments.findIndex(
+    (ap) => ap.label === req.body.apartmentName
+  );
+  user?.apartments.splice(indexToRemove, 1);
+  user.save();
+  res.status(200).json({
+    message: req.body.apartmentName,
+  });
 };
 
 const addReservation = async (req, res) => {
@@ -118,7 +154,7 @@ const addReservation = async (req, res) => {
 
   if (!errorFound) {
     user.save();
-    res.json(newReservation);
+    res.status(201).json(newReservation);
   }
 };
 
@@ -128,11 +164,11 @@ const deleteUser = async (req, res) => {
   const user = await User.findOne({ username: req.body.username }).exec();
   if (!user) {
     return res
-      .status(204)
+      .status(404)
       .json({ message: `User ID ${req.body.username} not found` });
   }
   const result = await user.deleteOne({ _id: user._id });
-  res.json(result);
+  res.json({ message: `Successfully deleted user: ${req.body.username}` });
 };
 
 const getUser = async (req, res) => {
@@ -158,7 +194,7 @@ const addAdmin = async (req, res) => {
     user.roles.Admin = 5050;
   }
   const result = await user.save();
-  res.json(result);
+  res.json({ message: `Sucessfully added ${req.body.username} as admin` });
 };
 const removeAdmin = async (req, res) => {
   if (!req?.body?.username)
@@ -173,7 +209,7 @@ const removeAdmin = async (req, res) => {
     user.roles.Admin = undefined;
   }
   const result = await user.save();
-  res.json(result);
+  res.json({ message: `Sucessfully removed ${req.body.username} as admin` });
 };
 
 module.exports = {
@@ -184,4 +220,5 @@ module.exports = {
   removeAdmin,
   addApartment,
   addReservation,
+  deleteApartment,
 };
