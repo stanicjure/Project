@@ -24,10 +24,13 @@ const userSchema = new Schema({
       label: String,
       reservations: [
         {
+          guestName: String,
           price: Number,
           persons: Number,
+          children: Number,
           start: Date,
           end: Date,
+          additionalInfo: String,
         },
       ],
     },

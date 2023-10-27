@@ -76,6 +76,14 @@ const addReservation = async (req, res) => {
   )
     return res.status(400).json({ message: "Reservation inputs are required" });
 
+  let guestName = "";
+  let children = undefined;
+  let additionalInfo = "";
+
+  if (req.body.guestName) guestName = req.body.guestName;
+  if (req.body.children) children = req.body.children;
+  if (req.body.additionalInfo) additionalInfo = req.body.additionalInfo;
+
   const user = await User.findOne({ username: req.body.username }).exec();
   const { apartmentName, startDate, endDate, persons, price } = req.body;
 
@@ -134,6 +142,9 @@ const addReservation = async (req, res) => {
             persons: persons,
             start: resetHoursStart,
             end: resetHoursEnd,
+            guestName: guestName,
+            children: children,
+            additionalInfo: additionalInfo,
           },
         ];
 
@@ -155,6 +166,77 @@ const addReservation = async (req, res) => {
   if (!errorFound) {
     user.save();
     res.status(201).json(newReservation);
+  }
+};
+
+const mutateReservation = async (req, res) => {
+  if (!req?.body?.username)
+    return res.status(400).json({ message: "User username required" });
+  const user = await User.findOne({ username: req.body.username }).exec();
+
+  const {
+    apartmentName,
+    reservationIndex,
+    guestName,
+    price,
+    persons,
+    children,
+    arrive,
+    leave,
+    additionalInfo,
+  } = req.body;
+
+  //Check if there is existing reservation
+  let reservations;
+  user?.apartments.forEach((ap) => {
+    if (ap.label === apartmentName) reservations = ap.reservations;
+  });
+
+  let errorFound = false;
+
+  const compareStart = new Date(arrive);
+  const compareEnd = new Date(leave);
+  compareStart.setHours(2);
+  compareEnd.setHours(2);
+
+  reservations.forEach((re) => {
+    if (!errorFound && re !== reservations[reservationIndex])
+      if (
+        (compareStart.getTime() >= re.start.getTime() &&
+          compareStart.getTime() < re.end.getTime()) ||
+        (compareEnd.getTime() > re.start.getTime() &&
+          compareEnd.getTime() <= re.end.getTime())
+      ) {
+        res.status(400).json({ message: "There is an existing reservation" });
+        errorFound = true;
+        return;
+      }
+  });
+
+  //
+
+  if (!errorFound) {
+    // set reservation
+    user.apartments.forEach((ap) => {
+      if (ap.label === apartmentName) {
+        ap.reservations[reservationIndex] = {
+          guestName: guestName,
+          price: price,
+          persons: persons,
+          children: children,
+          start: arrive,
+          end: leave,
+          additionalInfo: additionalInfo,
+        };
+      }
+    });
+
+    user.save();
+    res.status(200);
+  } else {
+    res
+      .status(400)
+      .json({ message: "Reservation already exists in specified time period" });
   }
 };
 
@@ -221,4 +303,5 @@ module.exports = {
   addApartment,
   addReservation,
   deleteApartment,
+  mutateReservation,
 };
