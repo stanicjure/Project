@@ -31,4 +31,8 @@ router
   .route("/reservation")
   .patch(verifyRoles(ROLES_LIST.Admin), usersController.mutateReservation);
 
+router
+  .route("/deleteReservation")
+  .patch(verifyRoles(ROLES_LIST.Admin), usersController.deleteReservation);
+
 module.exports = router;

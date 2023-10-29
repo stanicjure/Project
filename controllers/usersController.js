@@ -207,17 +207,16 @@ const mutateReservation = async (req, res) => {
         (compareEnd.getTime() > re.start.getTime() &&
           compareEnd.getTime() <= re.end.getTime())
       ) {
-        res.status(400).json({ message: "There is an existing reservation" });
         errorFound = true;
         return;
       }
   });
 
   //
-
+  let reservationInfoBack;
   if (!errorFound) {
     // set reservation
-    user.apartments.forEach((ap) => {
+    user.apartments.forEach((ap, index) => {
       if (ap.label === apartmentName) {
         ap.reservations[reservationIndex] = {
           guestName: guestName,
@@ -228,16 +227,55 @@ const mutateReservation = async (req, res) => {
           end: leave,
           additionalInfo: additionalInfo,
         };
+
+        reservationInfoBack = JSON.stringify({
+          label: ap.label,
+          index: reservationIndex,
+          reservation: ap.reservations[reservationIndex],
+        });
       }
     });
 
     user.save();
-    res.status(200);
+    res.status(200).json(reservationInfoBack);
   } else {
     res
       .status(400)
       .json({ message: "Reservation already exists in specified time period" });
   }
+};
+
+const deleteReservation = async (req, res) => {
+  if (!req?.body?.username)
+    return res.status(400).json({ message: "User username required" });
+  const user = await User.findOne({ username: req.body.username }).exec();
+  if (!user) {
+    return res
+      .status(404)
+      .json({ message: `User ID ${req.body.username} not found` });
+  }
+
+  if (!req.body._id) return res.sendStatus(400);
+
+  let reservations = new Array();
+  user.apartments.forEach((ap) => {
+    if (ap.label === req.body.apName)
+      reservations = Array.from(ap.reservations);
+  });
+
+  const newReservations = reservations.filter(
+    (r) => r._id.toString() !== req.body._id.toString()
+  );
+  console.log(newReservations);
+
+  user.apartments.forEach((ap) => {
+    if (ap.label === req.body.apName) {
+      ap.reservations = [...newReservations];
+    }
+  });
+
+  user.save();
+  res.sendStatus(204);
 };
 
 const deleteUser = async (req, res) => {
@@ -304,4 +342,5 @@ module.exports = {
   addReservation,
   deleteApartment,
   mutateReservation,
+  deleteReservation,
 };
