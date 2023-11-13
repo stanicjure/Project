@@ -31,6 +31,8 @@ const userSchema = new Schema({
           start: Date,
           end: Date,
           additionalInfo: String,
+          advancePay: Number,
+          payed: Boolean,
         },
       ],
     },

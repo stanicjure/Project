@@ -77,12 +77,16 @@ const addReservation = async (req, res) => {
     return res.status(400).json({ message: "Reservation inputs are required" });
 
   let guestName = "";
-  let children = undefined;
+  let children = 0;
   let additionalInfo = "";
+  let advancePay = 0;
+  let payed = false;
 
   if (req.body.guestName) guestName = req.body.guestName;
   if (req.body.children) children = req.body.children;
   if (req.body.additionalInfo) additionalInfo = req.body.additionalInfo;
+  if (req.body.advancePay) advancePay = req.body.advancePay;
+  if (req.body.payed) payed = req.body.payed;
 
   const user = await User.findOne({ username: req.body.username }).exec();
   const { apartmentName, startDate, endDate, persons, price } = req.body;
@@ -145,9 +149,12 @@ const addReservation = async (req, res) => {
             guestName: guestName,
             children: children,
             additionalInfo: additionalInfo,
+            advancePay: advancePay,
+            payed: payed,
           },
         ];
 
+        //dead code
         newReservation = {
           apartmentName: apartmentName,
           startDate: resetHoursStart,
@@ -184,6 +191,8 @@ const mutateReservation = async (req, res) => {
     arrive,
     leave,
     additionalInfo,
+    advancePay,
+    payed,
   } = req.body;
 
   //Check if there is existing reservation
@@ -226,6 +235,8 @@ const mutateReservation = async (req, res) => {
           start: arrive,
           end: leave,
           additionalInfo: additionalInfo,
+          advancePay: advancePay,
+          payed: payed,
         };
 
         reservationInfoBack = JSON.stringify({
@@ -266,7 +277,11 @@ const deleteReservation = async (req, res) => {
   const newReservations = reservations.filter(
     (r) => r._id.toString() !== req.body._id.toString()
   );
-  console.log(newReservations);
+
+  let sendBackIndex;
+  reservations.forEach((r, index) => {
+    if (r._id.toString() === req.body._id.toString()) sendBackIndex = index;
+  });
 
   user.apartments.forEach((ap) => {
     if (ap.label === req.body.apName) {
@@ -275,7 +290,9 @@ const deleteReservation = async (req, res) => {
   });
 
   user.save();
-  res.sendStatus(204);
+  res
+    .status(200)
+    .json({ index: sendBackIndex, newReservations: newReservations });
 };
 
 const deleteUser = async (req, res) => {
