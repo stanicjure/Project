@@ -1,4 +1,5 @@
 const User = require("../model/User");
+const GeneralStats = require("../model/GeneralStats");
 
 const getAllUsers = async (req, res) => {
   const users = await User.find();
@@ -349,6 +350,48 @@ const removeAdmin = async (req, res) => {
   res.json({ message: `Sucessfully removed ${req.body.username} as admin` });
 };
 
+const approveUserRequest = async (req, res) => {
+  const generalStatsExists = await GeneralStats.findOne({
+    name: "GeneralStats",
+  }).exec();
+
+  if (!req?.params?.id)
+    return res.status(400).json({ message: "User ID to approve is required" });
+
+  const user = await User.findOne({ username: req.params.id }).exec();
+
+  const requestRole = user?.roles;
+
+  if (requestRole.UserRequest) {
+    user.roles.User = 2001;
+    user.roles.UserRequest = undefined;
+    user.save();
+
+    generalStatsExists.requestsNumber--;
+    generalStatsExists.save();
+
+    return res.sendStatus(200);
+  } else return res.sendStatus(404);
+};
+
+const rejectUserRequest = async (req, res) => {
+  console.log("mega kurac");
+  const generalStatsExists = await GeneralStats.findOne({
+    name: "GeneralStats",
+  }).exec();
+
+  if (!req?.params?.id)
+    return res.status(400).json({ message: "User ID to reject is required" });
+
+  const deletedUser = await User.deleteOne({ username: req.params.id }).exec();
+
+  if (deletedUser) {
+    generalStatsExists.requestsNumber--;
+    generalStatsExists.save();
+
+    return res.sendStatus(204);
+  }
+};
 module.exports = {
   getAllUsers,
   deleteUser,
@@ -360,4 +403,6 @@ module.exports = {
   deleteApartment,
   mutateReservation,
   deleteReservation,
+  approveUserRequest,
+  rejectUserRequest,
 };

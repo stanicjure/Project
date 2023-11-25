@@ -12,7 +12,9 @@ router
 
 router
   .route("/:id")
-  .get(verifyRoles(ROLES_LIST.Admin), usersController.getUser);
+  .get(verifyRoles(ROLES_LIST.User), usersController.getUser) // baci oko na ovo, cemu sluzi getuser zab sam
+  .patch(verifyRoles(ROLES_LIST.Admin), usersController.approveUserRequest)
+  .delete(verifyRoles(ROLES_LIST.Admin), usersController.rejectUserRequest);
 
 router
   .route("/removeAdmin")
@@ -20,19 +22,19 @@ router
 
 router
   .route("/apartments")
-  .post(verifyRoles(ROLES_LIST.Admin), usersController.addApartment)
-  .patch(verifyRoles(ROLES_LIST.Admin), usersController.addReservation);
+  .post(verifyRoles(ROLES_LIST.User), usersController.addApartment)
+  .patch(verifyRoles(ROLES_LIST.User), usersController.addReservation);
 
 router
   .route("/apartments/delete")
-  .patch(verifyRoles(ROLES_LIST.Admin), usersController.deleteApartment);
+  .patch(verifyRoles(ROLES_LIST.User), usersController.deleteApartment);
 
 router
   .route("/reservation")
-  .patch(verifyRoles(ROLES_LIST.Admin), usersController.mutateReservation);
+  .patch(verifyRoles(ROLES_LIST.User), usersController.mutateReservation);
 
 router
   .route("/deleteReservation")
-  .patch(verifyRoles(ROLES_LIST.Admin), usersController.deleteReservation);
+  .patch(verifyRoles(ROLES_LIST.User), usersController.deleteReservation);
 
 module.exports = router;

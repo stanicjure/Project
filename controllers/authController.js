@@ -51,6 +51,7 @@ const handleLogin = async (req, res) => {
       });
     }
 
+    const username = foundUser.username;
     // Saving refreshToken with current user
     foundUser.refreshToken = [...newRefreshTokenArray, newRefreshToken];
     const result = await foundUser.save();
@@ -62,7 +63,7 @@ const handleLogin = async (req, res) => {
       maxAge: 24 * 60 * 60 * 1000,
     });
 
-    res.json({ user, accessToken, roles });
+    res.json({ username, accessToken, roles });
   } else {
     res.sendStatus(401);
   }
