@@ -13,8 +13,11 @@ router
 router
   .route("/:id")
   .get(verifyRoles(ROLES_LIST.User), usersController.getUser) // baci oko na ovo, cemu sluzi getuser zab sam
-  .patch(verifyRoles(ROLES_LIST.Admin), usersController.approveUserRequest)
   .delete(verifyRoles(ROLES_LIST.Admin), usersController.rejectUserRequest);
+
+router
+  .route("/approve/:id")
+  .patch(verifyRoles(ROLES_LIST.Admin), usersController.approveUserRequest);
 
 router
   .route("/removeAdmin")

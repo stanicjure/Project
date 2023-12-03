@@ -121,7 +121,7 @@ const addReservation = async (req, res) => {
 
   let errorFound = false;
   reservations.forEach((re) => {
-    if (!errorFound)
+    if (!errorFound) {
       if (
         (compareStart >= re.start.getTime() &&
           compareStart < re.end.getTime()) ||
@@ -131,6 +131,18 @@ const addReservation = async (req, res) => {
         errorFound = true;
         return;
       }
+      if (
+        (re.start.getTime() >= compareStart &&
+          re.start.getTime() < compareEnd) ||
+        (re.end.getTime() > compareStart && re.end.getTime() <= compareEnd)
+      ) {
+        res
+          .status(400)
+          .json({ message: "KURACThere is an existing reservation" });
+        errorFound = true;
+        return;
+      }
+    }
   });
 
   //
@@ -351,6 +363,7 @@ const removeAdmin = async (req, res) => {
 };
 
 const approveUserRequest = async (req, res) => {
+  console.log("Mega kurac");
   const generalStatsExists = await GeneralStats.findOne({
     name: "GeneralStats",
   }).exec();
@@ -362,7 +375,7 @@ const approveUserRequest = async (req, res) => {
 
   const requestRole = user?.roles;
 
-  if (requestRole.UserRequest) {
+  if (requestRole?.UserRequest) {
     user.roles.User = 2001;
     user.roles.UserRequest = undefined;
     user.save();

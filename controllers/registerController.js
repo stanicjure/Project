@@ -40,7 +40,7 @@ const handleNewUser = async (req, res) => {
     //Create and store the new user
     const result = await User.create({
       username: user,
-      // u schemi dodajemo role usera po defaultu
+      roles: { UserRequest: 1984 },
       password: hashedPwd,
     });
 
